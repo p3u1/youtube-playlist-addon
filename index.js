@@ -1,5 +1,6 @@
 // index.js
 const { addonBuilder, serveHTTP } = require("stremio-addon-sdk");
+const ytdl = require("ytdl-core");          // <- new line
 const playlist = require("./playlist");
 
 const manifest = {
@@ -55,19 +56,36 @@ builder.defineMetaHandler(args => {
   });
 });
 
-// Stream: how to play the item
-builder.defineStreamHandler(args => {
+// Stream: resolve YouTube URL to a direct video stream
+builder.defineStreamHandler(async args => {
   const item = playlist.find(v => v.id === args.id);
-  if (!item) return Promise.resolve({ streams: [] });
+  if (!item) return { streams: [] };
 
-  return Promise.resolve({
-    streams: [
-      {
-        title: "YouTube",
-        url: item.url
-      }
-    ]
-  });
+  try {
+    const info = await ytdl.getInfo(item.url);
+
+    const format = ytdl.chooseFormat(info.formats, {
+      quality: "highest",
+      filter: f => f.hasAudio && f.hasVideo
+    });
+
+    if (!format || !format.url) {
+      console.error("No playable format for", item.url);
+      return { streams: [] };
+    }
+
+    return {
+      streams: [
+        {
+          title: "YouTube",
+          url: format.url
+        }
+      ]
+    };
+  } catch (err) {
+    console.error("Error resolving YouTube URL", item.url, err);
+    return { streams: [] };
+  }
 });
 
 // Start HTTP server
