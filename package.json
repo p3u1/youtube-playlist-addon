@@ -1,0 +1,12 @@
+{
+  "name": "youtube-playlist-addon",
+  "version": "1.0.0",
+  "description": "YouTube Playlist – Stremio add-on for Paul's YouTube list",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "stremio-addon-sdk": "^1.5.0"
+  }
+}
